@@ -9,6 +9,8 @@ cache = client.econocards.cache
 
 # TODO api rate-limiting
 def get(path, params, cache=True):
+    print path
+    print params
     if cache:
         key = cache_key(path, params)
         result = get_from_cache(key)
@@ -47,9 +49,6 @@ def get_from_cache(key):
     return None
 
 def put_in_cache(key, result):
-    print key
-    print result
-
     payload = { "_id" : key, "query": json.loads(key), "result": result }
     payload['expires'] = datetime.datetime.now() + datetime.timedelta(days=settings.CACHEDAYS)
     cache.insert_one(payload)
