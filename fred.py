@@ -9,10 +9,10 @@ cache = client.econocards.cache
 
 # TODO api rate-limiting
 def get(path, params, cache=True):
-    print path
-    print params
     if cache:
         key = cache_key(path, params)
+        print key
+        print params
         result = get_from_cache(key)
         if result:
             return { "status_code": 200, "result": result }
@@ -22,21 +22,21 @@ def get(path, params, cache=True):
     query['api_key'] = settings.FRED_API_KEY
     if not query.has_key('file_type'):
         query['file_type'] = 'json'
-    if not query.has_key('limit'):
-        query['limit'] = 100000
-
     result = requests.get(url, params=query)
+
     # TODO paging?
     if result.status_code == 200:
         decoded = json.loads(result.text)
         if cache:
             put_in_cache(key, decoded)
         return { "status_code": 200, "result" : decoded }
-    # TODO error handling
-    return { "status_code" : result.status_code, "result" : result.reason }
+    # TODO smarter error handling
+    return { "status_code" : result.status_code, "result" : result.reason, "text":  result.text }
+
 
 def cache_key(path, params):
-    if not type(params) is dict:
+    if not isinstance(params, dict):
+        print type(params)
         params = {}
     key = params.copy()
     key['path'] = path
@@ -45,6 +45,7 @@ def cache_key(path, params):
 def get_from_cache(key):
     res = cache.find_one({"_id": key, "expires": {"$gt": datetime.datetime.now() }})
     if res and res['result']:
+        print "cache hit"
         return res['result']
     return None
 
