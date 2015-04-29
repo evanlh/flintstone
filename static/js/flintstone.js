@@ -34,15 +34,34 @@ var SearchForm = React.createClass({
   }
 });
 
+var SearchResultItem = React.createClass({
+  handleClick: function(e){
+    console.log(e);
+    console.log(this.props);
+    console.log(this.props.item.id);
+    this.props.onSelect(this.props.item.id);
+  },
+  render: function() {
+    return (
+      <li onClick={this.handleClick}>
+        <span className="title"  series-id={ this.props.item.id }>
+          { this.props.item.title }
+        </span>
+      </li>
+    );
+  }
+});
 
 var SearchResults = React.createClass({
   getInitialState: function() {
-    return { data: [] };
+    return { data: [], show: false };
   },
   loadSearchResults: function(props) {
-    console.log('hit loadsearch');
-    console.log(props);
-    if (!props.query) return;
+    if (!props.query) {
+      this.setState({ data: [], show: ""});
+      return;
+    }
+
     $.ajax({
       url: "/series/search",
       dataType: 'json',
@@ -52,7 +71,7 @@ var SearchResults = React.createClass({
       success: function(data) {
         console.log(data);
         if (data && data.seriess) {
-          this.setState({data: data.seriess});
+          this.setState({data: data.seriess, show: "show"});
         }
       }.bind(this),
       error: function(xhr, status, err) {
@@ -66,17 +85,18 @@ var SearchResults = React.createClass({
   componentWillReceiveProps: function (props) {
     this.loadSearchResults(props);
   },
+  selectItem: function(id){
+    this.setState({ show: "" });
+  },
   render: function() {
-    var searchItems = this.state.data.map(function(item){
-      return (
-        <li><span className="title" series-id="{ item.series_id }">{ item.title }</span></li>
-      );
-    });
-
+    var self = this;
+    var classString = "searchResults " + this.state.show;
     return (
-      <div className="searchResults">
+      <div className={ classString }>
         <ul>
-          { searchItems }
+          { this.state.data.map(function(item){
+              return <SearchResultItem key={item.id} item={item} onSelect={ self.selectItem } />;
+          })}
         </ul>
       </div>
     );
